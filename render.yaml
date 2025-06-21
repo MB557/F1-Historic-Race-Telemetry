@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: f1-race-replayer
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python3 main.py
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0 

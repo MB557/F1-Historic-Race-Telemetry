@@ -1,1 +1,0 @@
-# Scripts package for F1 Historic Race Replayer 

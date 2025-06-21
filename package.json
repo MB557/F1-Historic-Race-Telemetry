@@ -1,7 +1,7 @@
 {
   "name": "f1-historic-race-replayer",
   "version": "1.0.0",
-  "description": "F1 Historic Race Replayer with Node.js backend and Next.js frontend",
+  "description": "F1 Historic Race Replayer with Next.js frontend and serverless functions",
   "main": "server.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run frontend\"",
