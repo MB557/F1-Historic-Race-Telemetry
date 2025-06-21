@@ -160,7 +160,7 @@ export default function F1RaceReplayer() {
         setCurrentTimestamp(minTs + 60)
       }
 
-    } catch (error) {
+    } catch {
       console.warn('Could not determine timestamp range, using defaults')
     }
   }
