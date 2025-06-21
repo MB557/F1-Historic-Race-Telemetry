@@ -1,0 +1,30 @@
+# IDE files
+.idea/
+*.pyc
+__pycache__/
+.vscode/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Python virtual environment
+venv/
+env/
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp 
+node_modules
+
+# Embedded git repositories
+F1-Historic-Race-NodeJS/

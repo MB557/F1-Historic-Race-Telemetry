@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Historic Race Replayer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏎️ F1 Historic Race Replayer</h1>
+            <p>Load and replay Formula 1 races with real telemetry data</p>
+        </header>
+
+        <section class="race-loader">
+            <div class="input-group">
+                <label for="raceInput">Enter Race Name:</label>
+                <input 
+                    type="text" 
+                    id="raceInput" 
+                    placeholder="e.g., Bahrain GP 2023, Monaco 2023, Japan GP 2023"
+                    value="Bahrain GP 2023"
+                >
+                <button id="loadRaceBtn">Load Race</button>
+            </div>
+            <div id="loadingStatus" class="status hidden">Loading race data...</div>
+            <div id="errorMessage" class="error hidden"></div>
+        </section>
+
+        <section class="race-info hidden" id="raceInfo">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label">Race:</span>
+                    <span id="raceName">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Session:</span>
+                    <span id="sessionKey">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Total Laps:</span>
+                    <span id="totalLaps">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Timeline Entries:</span>
+                    <span id="timelineEntries">-</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="race-controls hidden" id="raceControls">
+            <div class="timeline-controls">
+                <div class="time-display">
+                    <span class="label">Race Time:</span>
+                    <span id="currentTime">0:00:00</span>
+                    <span class="separator">/</span>
+                    <span id="totalTime">0:00:00</span>
+                </div>
+                
+                <div class="slider-container">
+                    <input 
+                        type="range" 
+                        id="timeSlider" 
+                        min="0" 
+                        max="100" 
+                        value="0" 
+                        step="0.1"
+                        disabled
+                    >
+                </div>
+                
+                <div class="playback-controls">
+                    <button id="playBtn" disabled>▶️ Play</button>
+                    <button id="pauseBtn" disabled>⏸️ Pause</button>
+                    <button id="resetBtn" disabled>🔄 Reset</button>
+                    <div class="speed-control">
+                        <label for="speedSelect">Speed:</label>
+                        <select id="speedSelect">
+                            <option value="0.5">0.5x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="2">2x</option>
+                            <option value="5">5x</option>
+                            <option value="10">10x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="race-visualization hidden" id="raceVisualization">
+            <div class="canvas-container">
+                <h3>Race Positions</h3>
+                <canvas id="raceCanvas" width="800" height="600"></canvas>
+                <div class="canvas-info">
+                    <p>🏁 Track positions showing driver race standings</p>
+                    <div id="positionList" class="position-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="race-data hidden" id="raceData">
+            <h3>Current Race State</h3>
+            <div class="data-display">
+                <div class="data-item">
+                    <span class="label">Timestamp:</span>
+                    <span id="dataTimestamp">-</span>
+                </div>
+                <div class="data-item">
+                    <span class="label">Cars on Track:</span>
+                    <span id="dataCarsCount">-</span>
+                </div>
+            </div>
+            <div class="drivers-grid" id="driversGrid">
+                <!-- Driver data will be populated here -->
+            </div>
+        </section>
+
+        <footer>
+            <p>Data provided by <a href="https://openf1.org/" target="_blank">OpenF1 API</a></p>
+            <p>This is an unofficial project - not affiliated with Formula 1</p>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html> 
