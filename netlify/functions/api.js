@@ -390,4 +390,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }
-}; 
+};
