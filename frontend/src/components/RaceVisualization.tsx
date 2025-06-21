@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useMemo } from 'react'
 
 interface CarState {
   driver_number: number
@@ -24,7 +24,7 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Driver colors (F1 team colors approximation)
-  const driverColors: Record<number, string> = {
+  const driverColors: Record<number, string> = useMemo(() => ({
     1: '#0090FF', 44: '#0090FF', // Mercedes
     11: '#FF8700', 4: '#FF8700', // McLaren
     16: '#FF0000', 55: '#FF0000', // Ferrari
@@ -35,24 +35,7 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
     24: '#FF0000', 77: '#FF0000', // Alfa Romeo
     63: '#FF0000', 5: '#FF0000', // Williams
     3: '#FF8700', 27: '#FF8700', // Alpine
-  }
-
-  const drawRaceVisualization = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Draw track background
-    drawTrackBackground(ctx, canvas)
-
-    // Draw cars
-    state.cars.forEach((car, index) => drawCar(ctx, car, index, canvas))
-  }, [state])
+  }), [])
 
   const drawTrackBackground = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
     const { width, height } = canvas
@@ -83,7 +66,7 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
     }
   }
 
-  const drawCar = (
+  const drawCar = useCallback((
     ctx: CanvasRenderingContext2D,
     car: CarState,
     index: number,
@@ -124,7 +107,24 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
       ctx.fillStyle = `rgb(${red}, ${green}, 0)`
       ctx.fillRect(x + 20, y - speedBarHeight / 2, 4, speedBarHeight)
     }
-  }
+  }, [driverColors])
+
+  const drawRaceVisualization = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    // Draw track background
+    drawTrackBackground(ctx, canvas)
+
+    // Draw cars
+    state.cars.forEach((car, index) => drawCar(ctx, car, index, canvas))
+  }, [state, drawCar])
 
   // Update visualization when state changes
   useEffect(() => {

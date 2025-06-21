@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 interface CarData {
   driver_number: number;
@@ -27,7 +27,6 @@ interface F1TelemetryTableProps {
 
 const F1TelemetryTable: React.FC<F1TelemetryTableProps> = ({ 
   carData, 
-  currentTimestamp, 
   speedFilter 
 }) => {
 
@@ -47,10 +46,6 @@ const F1TelemetryTable: React.FC<F1TelemetryTableProps> = ({
       return a.driver_number - b.driver_number;
     });
   }, [filteredData]);
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleTimeString();
-  };
 
   const getSpeedColor = (speed: number) => {
     if (speed === 0) return 'text-gray-500';
