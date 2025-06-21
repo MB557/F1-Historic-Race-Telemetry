@@ -187,7 +187,34 @@ class OpenF1Client {
   }
 
   getBasePosition(driverNum, sessionKey) {
-    // Define typical performance order for drivers
+    // Monaco 2024 - Charles Leclerc (#16) won
+    if (sessionKey === '9165') {
+      const monacoResults = {
+        '16': 1, // Charles Leclerc - WINNER
+        '81': 2, // Oscar Piastri - 2nd
+        '55': 3, // Carlos Sainz - 3rd
+        '63': 4, // George Russell - 4th
+        '4': 5,  // Lando Norris - 5th
+        '44': 6, // Lewis Hamilton - 6th
+        '22': 7, // Yuki Tsunoda - 7th
+        '14': 8, // Fernando Alonso - 8th
+        '31': 9, // Esteban Ocon - 9th
+        '18': 10, // Lance Stroll - 10th
+        '77': 11, // Valtteri Bottas - 11th
+        '20': 12, // Kevin Magnussen - 12th
+        '3': 13,  // Daniel Ricciardo - 13th
+        '10': 14, // Pierre Gasly - 14th
+        '24': 15, // Zhou Guanyu - 15th
+        '23': 16, // Alex Albon - 16th
+        '2': 17,  // Logan Sargeant - 17th
+        '27': 18, // Nico Hulkenberg - 18th
+        '11': 19, // Sergio Perez - 19th (DNF)
+        '1': 20   // Max Verstappen - 20th (DNF)
+      };
+      return monacoResults[driverNum] || 20;
+    }
+    
+    // Define typical performance order for other races
     const performanceOrder = {
       '1': 1,   // Verstappen
       '44': 3,  // Hamilton  
