@@ -186,31 +186,6 @@ The app works with any F1 race from recent years. Some examples:
    - Run `npm run install-all` to install all dependencies
    - Clear node_modules and reinstall if issues persist
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## ⚡ Performance Notes
-
-- Race data is fetched from OpenF1 API and cached in memory
-- Large datasets (full race sessions) may take 30-60 seconds to load initially
-- Subsequent interactions are fast due to local caching
-- For production, consider implementing additional caching strategies
-
-## 🙏 Acknowledgments
-
-- [OpenF1 API](https://openf1.org/) for providing authentic F1 telemetry data
-- Formula 1 for the amazing sport that makes this possible
-- The open-source community for the tools and libraries used
-
 ---
 
 **Note**: This is an unofficial project and is not affiliated with Formula 1, FIA, or any F1 teams. 
