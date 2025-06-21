@@ -2,8 +2,63 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
-const DatabaseService = require('./db-service');
 require('dotenv').config();
+
+// F1 Race Calendar Data for 2024 and 2025 (same as Netlify function)
+const F1_RACES = {
+  2024: [
+    { session_key: '9158', session_name: 'Bahrain GP 2024', country: 'Bahrain', date: '2024-03-02' },
+    { session_key: '9159', session_name: 'Saudi Arabian GP 2024', country: 'Saudi Arabia', date: '2024-03-09' },
+    { session_key: '9160', session_name: 'Australian GP 2024', country: 'Australia', date: '2024-03-24' },
+    { session_key: '9161', session_name: 'Japanese GP 2024', country: 'Japan', date: '2024-04-07' },
+    { session_key: '9162', session_name: 'Chinese GP 2024', country: 'China', date: '2024-04-21' },
+    { session_key: '9163', session_name: 'Miami GP 2024', country: 'United States', date: '2024-05-05' },
+    { session_key: '9164', session_name: 'Emilia Romagna GP 2024', country: 'Italy', date: '2024-05-19' },
+    { session_key: '9165', session_name: 'Monaco GP 2024', country: 'Monaco', date: '2024-05-26' },
+    { session_key: '9166', session_name: 'Canadian GP 2024', country: 'Canada', date: '2024-06-09' },
+    { session_key: '9167', session_name: 'Spanish GP 2024', country: 'Spain', date: '2024-06-23' },
+    { session_key: '9168', session_name: 'Austrian GP 2024', country: 'Austria', date: '2024-06-30' },
+    { session_key: '9169', session_name: 'British GP 2024', country: 'United Kingdom', date: '2024-07-07' },
+    { session_key: '9170', session_name: 'Hungarian GP 2024', country: 'Hungary', date: '2024-07-21' },
+    { session_key: '9171', session_name: 'Belgian GP 2024', country: 'Belgium', date: '2024-07-28' },
+    { session_key: '9172', session_name: 'Dutch GP 2024', country: 'Netherlands', date: '2024-08-25' },
+    { session_key: '9173', session_name: 'Italian GP 2024', country: 'Italy', date: '2024-09-01' },
+    { session_key: '9174', session_name: 'Azerbaijan GP 2024', country: 'Azerbaijan', date: '2024-09-15' },
+    { session_key: '9175', session_name: 'Singapore GP 2024', country: 'Singapore', date: '2024-09-22' },
+    { session_key: '9176', session_name: 'United States GP 2024', country: 'United States', date: '2024-10-20' },
+    { session_key: '9177', session_name: 'Mexico City GP 2024', country: 'Mexico', date: '2024-10-27' },
+    { session_key: '9178', session_name: 'São Paulo GP 2024', country: 'Brazil', date: '2024-11-03' },
+    { session_key: '9179', session_name: 'Las Vegas GP 2024', country: 'United States', date: '2024-11-23' },
+    { session_key: '9180', session_name: 'Qatar GP 2024', country: 'Qatar', date: '2024-12-01' },
+    { session_key: '9181', session_name: 'Abu Dhabi GP 2024', country: 'United Arab Emirates', date: '2024-12-08' }
+  ],
+  2025: [
+    { session_key: '9200', session_name: 'Australian GP 2025', country: 'Australia', date: '2025-03-16' },
+    { session_key: '9201', session_name: 'Chinese GP 2025', country: 'China', date: '2025-03-23' },
+    { session_key: '9202', session_name: 'Japanese GP 2025', country: 'Japan', date: '2025-04-06' },
+    { session_key: '9203', session_name: 'Bahrain GP 2025', country: 'Bahrain', date: '2025-04-13' },
+    { session_key: '9204', session_name: 'Saudi Arabian GP 2025', country: 'Saudi Arabia', date: '2025-04-20' },
+    { session_key: '9205', session_name: 'Miami GP 2025', country: 'United States', date: '2025-05-04' },
+    { session_key: '9206', session_name: 'Emilia Romagna GP 2025', country: 'Italy', date: '2025-05-18' },
+    { session_key: '9207', session_name: 'Monaco GP 2025', country: 'Monaco', date: '2025-05-25' },
+    { session_key: '9208', session_name: 'Spanish GP 2025', country: 'Spain', date: '2025-06-01' },
+    { session_key: '9209', session_name: 'Canadian GP 2025', country: 'Canada', date: '2025-06-15' },
+    { session_key: '9210', session_name: 'Austrian GP 2025', country: 'Austria', date: '2025-06-29' },
+    { session_key: '9211', session_name: 'British GP 2025', country: 'United Kingdom', date: '2025-07-06' },
+    { session_key: '9212', session_name: 'Belgian GP 2025', country: 'Belgium', date: '2025-07-27' },
+    { session_key: '9213', session_name: 'Hungarian GP 2025', country: 'Hungary', date: '2025-08-03' },
+    { session_key: '9214', session_name: 'Dutch GP 2025', country: 'Netherlands', date: '2025-08-31' },
+    { session_key: '9215', session_name: 'Italian GP 2025', country: 'Italy', date: '2025-09-07' },
+    { session_key: '9216', session_name: 'Azerbaijan GP 2025', country: 'Azerbaijan', date: '2025-09-21' },
+    { session_key: '9217', session_name: 'Singapore GP 2025', country: 'Singapore', date: '2025-10-05' },
+    { session_key: '9218', session_name: 'United States GP 2025', country: 'United States', date: '2025-10-19' },
+    { session_key: '9219', session_name: 'Mexico City GP 2025', country: 'Mexico', date: '2025-10-26' },
+    { session_key: '9220', session_name: 'São Paulo GP 2025', country: 'Brazil', date: '2025-11-09' },
+    { session_key: '9221', session_name: 'Las Vegas GP 2025', country: 'United States', date: '2025-11-22' },
+    { session_key: '9222', session_name: 'Qatar GP 2025', country: 'Qatar', date: '2025-11-30' },
+    { session_key: '9223', session_name: 'Abu Dhabi GP 2025', country: 'United Arab Emirates', date: '2025-12-07' }
+  ]
+};
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -433,8 +488,38 @@ app.get('/', (req, res) => {
   });
 });
 
-// Get available sessions  
+// Get available years
+app.get('/api/years', async (req, res) => {
+  try {
+    res.json([
+      { year: 2024, name: '2024 Season' },
+      { year: 2025, name: '2025 Season' }
+    ]);
+  } catch (error) {
+    console.error('❌ Error getting years:', error);
+    res.status(500).json({ error: 'Failed to fetch years' });
+  }
+});
+
+// Get sessions for a specific year
 app.get('/api/sessions', async (req, res) => {
+  try {
+    const { year } = req.query;
+    
+    if (!year) {
+      return res.status(400).json({ error: 'Year parameter is required' });
+    }
+
+    const sessions = F1_RACES[parseInt(year)] || [];
+    res.json(sessions);
+  } catch (error) {
+    console.error('❌ Error getting sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+// Legacy sessions endpoint (for backward compatibility)
+app.get('/api/sessions/legacy', async (req, res) => {
   try {
     // Return real F1 2023 race sessions with actual session keys
     const sessions = [
