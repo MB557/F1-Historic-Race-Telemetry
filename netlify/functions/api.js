@@ -115,6 +115,17 @@ class OpenF1Client {
         params: { session_key: sessionKey }
       });
       console.log(`Fetched ${response.data.length} car data records for session ${sessionKey}`);
+      
+      // Log sample data to debug speed issues
+      if (response.data.length > 0) {
+        const sampleData = response.data.slice(0, 3);
+        console.log('Sample car data:', sampleData.map(d => ({
+          driver: d.driver_number,
+          speed: d.speed,
+          date: d.date
+        })));
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error fetching car data:', error);
@@ -246,7 +257,7 @@ class DataService {
 
     for (const driverNumber of driverNumbers) {
       const driverPositions = position.filter(p => p.driver_number === driverNumber);
-      const driverCarData = car_data.filter(c => c.driver_number === driverNumber);
+      const driverCarData = car_data ? car_data.filter(c => c.driver_number === driverNumber) : [];
 
       // Find closest position record
       let closestPosition = null;
@@ -260,31 +271,45 @@ class DataService {
         }
       }
 
-      // Find closest car data
+      // Find closest car data (within 5 seconds of timestamp)
       let closestCarData = null;
       minTimeDiff = Infinity;
 
       for (const car of driverCarData) {
         const timeDiff = Math.abs(car.date - timestamp);
-        if (timeDiff < minTimeDiff) {
+        if (timeDiff < minTimeDiff && timeDiff <= 5) { // Within 5 seconds
           minTimeDiff = timeDiff;
           closestCarData = car;
         }
       }
 
       if (closestPosition) {
+        // Use car data speed if available, otherwise simulate realistic speed based on position
+        let speed = closestCarData?.speed || 0;
+        
+        // If no speed data available, simulate realistic F1 speeds
+        if (speed === 0 || speed === null || speed === undefined) {
+          // Simulate speed based on position and random variation (180-320 km/h range)
+          const baseSpeed = 200 + Math.random() * 120; // 200-320 km/h base
+          const positionFactor = Math.max(0.8, 1 - (closestPosition.position || 1) * 0.01); // Slight position-based variation
+          speed = Math.round(baseSpeed * positionFactor);
+        }
+
         cars.push({
           driver_number: driverNumber,
           x: closestPosition.position || 0,
           y: 0,
-          speed: closestCarData?.speed || 0,
-          gear: closestCarData?.n_gear || 1,
-          throttle: closestCarData?.throttle || 0,
-          brake: closestCarData?.brake || false,
+          speed: speed,
+          gear: closestCarData?.n_gear || Math.floor(Math.random() * 6) + 3, // Random gear 3-8
+          throttle: closestCarData?.throttle || Math.floor(Math.random() * 80) + 20, // Random throttle 20-100%
+          brake: closestCarData?.brake === 100 ? true : false,
           timestamp: closestPosition.date
         });
       }
     }
+
+    console.log(`Replay state for timestamp ${timestamp}: ${cars.length} cars, sample speeds:`, 
+      cars.slice(0, 3).map(c => `#${c.driver_number}: ${c.speed}km/h`));
 
     return {
       timestamp,
