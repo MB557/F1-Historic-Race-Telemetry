@@ -420,53 +420,6 @@ class OpenF1APIService {
   }
 
   generateSimulatedData(sessionKey, timestamp) {
-    // Monaco 2024 - Use actual race results for session 9165
-    if (sessionKey === '9165') {
-      const monacoResults = [
-        { driver_number: 16, position: 1 }, // Charles Leclerc - WINNER
-        { driver_number: 81, position: 2 }, // Oscar Piastri - 2nd
-        { driver_number: 55, position: 3 }, // Carlos Sainz - 3rd
-        { driver_number: 63, position: 4 }, // George Russell - 4th
-        { driver_number: 4, position: 5 },  // Lando Norris - 5th
-        { driver_number: 44, position: 6 }, // Lewis Hamilton - 6th
-        { driver_number: 22, position: 7 }, // Yuki Tsunoda - 7th
-        { driver_number: 14, position: 8 }, // Fernando Alonso - 8th
-        { driver_number: 31, position: 9 }, // Esteban Ocon - 9th
-        { driver_number: 18, position: 10 }, // Lance Stroll - 10th
-        { driver_number: 77, position: 11 }, // Valtteri Bottas - 11th
-        { driver_number: 20, position: 12 }, // Kevin Magnussen - 12th
-        { driver_number: 3, position: 13 },  // Daniel Ricciardo - 13th
-        { driver_number: 10, position: 14 }, // Pierre Gasly - 14th
-        { driver_number: 24, position: 15 }, // Zhou Guanyu - 15th
-        { driver_number: 23, position: 16 }, // Alex Albon - 16th
-        { driver_number: 2, position: 17 },  // Logan Sargeant - 17th
-        { driver_number: 27, position: 18 }, // Nico Hulkenberg - 18th
-        { driver_number: 11, position: 19 }, // Sergio Perez - 19th (DNF)
-        { driver_number: 1, position: 20 }   // Max Verstappen - 20th (DNF)
-      ];
-      
-      const cars = monacoResults.map((result) => ({
-        driver_number: result.driver_number,
-        x: (result.position - 1) * 50,
-        y: 0,
-        z: 0,
-        speed: 200 + (20 - result.position) * 5 + Math.random() * 20, // Faster cars in front
-        gear: Math.floor(Math.random() * 8) + 1,
-        throttle: 80 + (20 - result.position) * 2 + Math.random() * 20,
-        brake: Math.random() < 0.05 ? 100 : 0,
-        rpm: 9000 + Math.random() * 3000,
-        drs: Math.random() < 0.2 ? 1 : 0,
-        position: result.position,
-        timestamp
-      }));
-
-      console.log(`🏁 Generated Monaco 2024 race results for session ${sessionKey}: ${cars.length} cars`);
-      return {
-        timestamp,
-        cars: cars.sort((a, b) => a.position - b.position)
-      };
-    }
-    
     // Full F1 2024 grid for other races
     const drivers = [1, 2, 3, 4, 10, 11, 14, 16, 18, 20, 22, 23, 24, 27, 31, 44, 55, 63, 77, 81];
     
