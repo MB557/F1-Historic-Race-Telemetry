@@ -1,126 +1,125 @@
-import React, { ChangeEvent } from 'react'
+import React, { ChangeEvent, useState, useEffect } from 'react'
 
 interface RaceControlsProps {
-  isPlaying: boolean
-  playbackSpeed: number
-  currentTimestamp: number
-  minTimestamp: number
-  maxTimestamp: number
-  onPlay: () => void
-  onPause: () => void
-  onReset: () => void
-  onSpeedChange: (speed: number) => void
-  onTimestampChange: (timestamp: number) => void
+  selectedSession: string
+  onSessionChange: (sessionKey: string) => void
+  speedFilter: number
+  onSpeedFilterChange: (speed: number) => void
+  currentLap: number
+  onLapChange: (lap: number) => void
+  totalLaps: number
 }
 
-export function RaceControls({
-  isPlaying,
-  playbackSpeed,
-  currentTimestamp,
-  minTimestamp,
-  maxTimestamp,
-  onPlay,
-  onPause,
-  onReset,
-  onSpeedChange,
-  onTimestampChange
+export default function RaceControls({ 
+  selectedSession, 
+  onSessionChange, 
+  speedFilter, 
+  onSpeedFilterChange,
+  currentLap,
+  onLapChange,
+  totalLaps
 }: RaceControlsProps) {
-  const formatTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
+  const [sessions, setSessions] = useState<Array<{session_key: string, session_name: string}>>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const progress = parseFloat(e.target.value) / 100
-    const timestamp = minTimestamp + (maxTimestamp - minTimestamp) * progress
-    onTimestampChange(timestamp)
-  }
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/sessions');
+        const data = await response.json();
+        setSessions(data);
+      } catch (error) {
+        console.error('Error fetching sessions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSpeedChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    onSpeedChange(parseFloat(e.target.value))
-  }
+    fetchSessions();
+  }, []);
 
-  const currentProgress = maxTimestamp > minTimestamp 
-    ? ((currentTimestamp - minTimestamp) / (maxTimestamp - minTimestamp)) * 100 
-    : 0
-
-  const totalDuration = maxTimestamp - minTimestamp
-  const currentDuration = currentTimestamp - minTimestamp
+  const speedOptions = [
+    { value: 0, label: 'All Speeds' },
+    { value: 50, label: '≥50 km/h' },
+    { value: 100, label: '≥100 km/h' },
+    { value: 150, label: '≥150 km/h' },
+    { value: 200, label: '≥200 km/h' },
+    { value: 250, label: '≥250 km/h' },
+    { value: 300, label: '≥300 km/h' }
+  ];
 
   return (
-    <section className="bg-white rounded-xl p-6 mb-6 shadow-lg">
-      <div className="flex flex-col gap-6">
-        {/* Time Display */}
-        <div className="text-center">
-          <div className="text-xl font-semibold text-gray-800">
-            <span className="text-blue-600">{formatTime(currentDuration)}</span>
-            <span className="text-gray-800 mx-2">/</span>
-            <span className="text-gray-900">{formatTime(totalDuration)}</span>
-          </div>
+    <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Session Selector */}
+        <div>
+          <label className="block text-sm font-medium text-gray-800 mb-2">
+            Race Session
+          </label>
+          <select
+            value={selectedSession}
+            onChange={(e) => onSessionChange(e.target.value)}
+            disabled={loading}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+          >
+            <option value="">
+              {loading ? 'Loading...' : 'Select a race'}
+            </option>
+            {sessions.map((session) => (
+              <option key={session.session_key} value={session.session_key}>
+                {session.session_name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Timeline Slider */}
-        <div className="w-full">
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="0.1"
-            value={currentProgress}
-            onChange={handleSliderChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-            style={{
-              background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${currentProgress}%, #E5E7EB ${currentProgress}%, #E5E7EB 100%)`
-            }}
-          />
+        {/* Lap Selector */}
+        <div>
+          <label className="block text-sm font-medium text-gray-800 mb-2">
+            Lap
+          </label>
+          <select
+            value={currentLap}
+            onChange={(e) => onLapChange(parseInt(e.target.value))}
+            disabled={!selectedSession}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+          >
+            {Array.from({ length: totalLaps }, (_, i) => i + 1).map((lap) => (
+              <option key={lap} value={lap}>
+                Lap {lap}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Playback Controls */}
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <button
-            onClick={onPlay}
-            disabled={isPlaying}
-            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white font-semibold rounded-lg transition-all duration-300 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        {/* Speed Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-800 mb-2">
+            Speed Filter
+          </label>
+          <select
+            value={speedFilter}
+            onChange={(e) => onSpeedFilterChange(parseInt(e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
           >
-            ▶️ Play
-          </button>
-          
-          <button
-            onClick={onPause}
-            disabled={!isPlaying}
-            className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg transition-all duration-300 hover:bg-yellow-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            ⏸️ Pause
-          </button>
-          
-          <button
-            onClick={onReset}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg transition-all duration-300 hover:bg-blue-600"
-          >
-            🔄 Reset
-          </button>
+            {speedOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <label htmlFor="speedSelect" className="font-semibold text-gray-900">
-              Speed:
-            </label>
-            <select
-              id="speedSelect"
-              value={playbackSpeed}
-              onChange={handleSpeedChange}
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white font-medium text-gray-900 focus:outline-none focus:border-blue-500"
-            >
-              <option value={0.5}>0.5x</option>
-              <option value={1}>1x</option>
-              <option value={2}>2x</option>
-              <option value={5}>5x</option>
-              <option value={10}>10x</option>
-            </select>
+        {/* Lap Info */}
+        <div>
+          <label className="block text-sm font-medium text-gray-800 mb-2">
+            Race Progress
+          </label>
+          <div className="px-3 py-2 bg-gray-100 rounded-md text-gray-900">
+            {selectedSession ? `${currentLap} / ${totalLaps}` : 'No race selected'}
           </div>
         </div>
       </div>
-    </section>
-  )
+    </div>
+  );
 } 
