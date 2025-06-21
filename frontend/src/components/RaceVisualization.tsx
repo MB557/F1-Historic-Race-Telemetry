@@ -155,7 +155,7 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
 
         {/* Position List */}
         <div className="lg:w-80">
-          <h4 className="font-semibold mb-3 text-gray-700">Current Positions</h4>
+          <h4 className="font-semibold mb-3 text-gray-900">Current Positions</h4>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {sortedCars.map((car, index) => (
               <div

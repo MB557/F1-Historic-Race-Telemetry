@@ -68,7 +68,7 @@ export default function F1RaceReplayer() {
 
   const playbackInterval = useRef<NodeJS.Timeout | null>(null)
 
-  // API endpoints
+  // API endpoints - try multiple ports in development
   const API_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : ''
 
   const loadRace = async (raceName: string) => {

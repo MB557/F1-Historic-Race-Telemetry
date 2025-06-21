@@ -22,7 +22,7 @@ export function RaceLoader({ onLoadRace, loading, error }: RaceLoaderProps) {
   return (
     <section className="bg-white rounded-xl p-6 mb-6 shadow-lg hover:shadow-xl transition-all duration-300">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <label htmlFor="raceInput" className="font-semibold text-gray-700 min-w-[140px]">
+        <label htmlFor="raceInput" className="font-semibold text-gray-900 min-w-[140px]">
           Enter Race Name:
         </label>
         <input

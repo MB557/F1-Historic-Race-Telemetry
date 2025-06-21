@@ -30,19 +30,19 @@ export function RaceDataDisplay({ state }: RaceDataDisplayProps) {
 
   return (
     <section className="bg-white rounded-xl p-6 mb-6 shadow-lg">
-      <h3 className="text-xl font-bold mb-4 text-gray-800">Current Race State</h3>
+      <h3 className="text-xl font-bold mb-4 text-gray-900">Current Race State</h3>
       
       {/* Race State Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-          <span className="font-semibold text-gray-600">Timestamp:</span>
+          <span className="font-semibold text-gray-800">Timestamp:</span>
           <span className="font-mono text-sm text-gray-900">
             {formatTimestamp(state.timestamp)}
           </span>
         </div>
         
         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-          <span className="font-semibold text-gray-600">Cars on Track:</span>
+          <span className="font-semibold text-gray-800">Cars on Track:</span>
           <span className="font-semibold text-gray-900">{state.cars.length}</span>
         </div>
       </div>
@@ -69,27 +69,27 @@ export function RaceDataDisplay({ state }: RaceDataDisplayProps) {
             {/* Telemetry Data */}
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Speed:</span>
-                <span className="font-semibold">{Math.round(car.speed)} km/h</span>
+                <span className="text-gray-800">Speed:</span>
+                <span className="font-semibold">{Math.round(car.speed || 0)} km/h</span>
               </div>
               
               {car.gear !== undefined && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Gear:</span>
+                  <span className="text-gray-800">Gear:</span>
                   <span className="font-semibold font-mono">{car.gear}</span>
                 </div>
               )}
               
               {car.throttle !== undefined && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Throttle:</span>
+                  <span className="text-gray-800">Throttle:</span>
                   <span className="font-semibold">{Math.round(car.throttle)}%</span>
                 </div>
               )}
               
               {car.brake !== undefined && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Brake:</span>
+                  <span className="text-gray-800">Brake:</span>
                   <span className={`font-semibold ${car.brake ? 'text-red-600' : 'text-green-600'}`}>
                     {car.brake ? 'ON' : 'OFF'}
                   </span>
@@ -97,7 +97,7 @@ export function RaceDataDisplay({ state }: RaceDataDisplayProps) {
               )}
               
               <div className="flex justify-between">
-                <span className="text-gray-600">Position:</span>
+                <span className="text-gray-800">Position:</span>
                 <span className="font-semibold">{car.x || index + 1}</span>
               </div>
             </div>
