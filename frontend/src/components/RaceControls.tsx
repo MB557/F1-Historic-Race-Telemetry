@@ -56,8 +56,8 @@ export function RaceControls({
         <div className="text-center">
           <div className="text-xl font-semibold text-gray-800">
             <span className="text-blue-600">{formatTime(currentDuration)}</span>
-            <span className="text-gray-400 mx-2">/</span>
-            <span className="text-gray-600">{formatTime(totalDuration)}</span>
+            <span className="text-gray-800 mx-2">/</span>
+            <span className="text-gray-900">{formatTime(totalDuration)}</span>
           </div>
         </div>
 
@@ -103,14 +103,14 @@ export function RaceControls({
           </button>
 
           <div className="flex items-center gap-2">
-            <label htmlFor="speedSelect" className="font-semibold text-gray-700">
+            <label htmlFor="speedSelect" className="font-semibold text-gray-900">
               Speed:
             </label>
             <select
               id="speedSelect"
               value={playbackSpeed}
               onChange={handleSpeedChange}
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white font-medium focus:outline-none focus:border-blue-500"
+              className="px-3 py-1 border border-gray-300 rounded-lg bg-white font-medium text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value={0.5}>0.5x</option>
               <option value={1}>1x</option>

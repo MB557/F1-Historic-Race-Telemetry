@@ -111,24 +111,30 @@ class OpenF1Client {
 
   async getCarData(sessionKey) {
     try {
+      // Try fetching car data with a smaller time range to avoid 422 error
       const response = await axios.get(`${this.baseURL}/car_data`, {
-        params: { session_key: sessionKey }
+        params: { 
+          session_key: sessionKey,
+          driver_number: '1,44,16,55,11,4,14,18'  // Limit to 8 drivers to reduce data size
+        }
       });
       console.log(`Fetched ${response.data.length} car data records for session ${sessionKey}`);
       
       // Log sample data to debug speed issues
       if (response.data.length > 0) {
-        const sampleData = response.data.slice(0, 3);
+        const sampleData = response.data.slice(0, 5);
         console.log('Sample car data:', sampleData.map(d => ({
           driver: d.driver_number,
           speed: d.speed,
-          date: d.date
+          date: d.date,
+          throttle: d.throttle
         })));
       }
       
       return response.data;
     } catch (error) {
-      console.error('Error fetching car data:', error);
+      console.error('Error fetching car data:', error.message);
+      console.error('Status:', error.response?.status, 'Data:', error.response?.data);
       throw error;
     }
   }

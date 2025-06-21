@@ -32,7 +32,7 @@ export function RaceLoader({ onLoadRace, loading, error }: RaceLoaderProps) {
           onChange={(e) => setRaceName(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder="e.g., Bahrain GP 2023, Monaco 2023, Japan GP 2023"
-          className="flex-1 min-w-[300px] px-4 py-3 border-2 border-gray-200 rounded-lg text-base transition-all duration-300 focus:outline-none focus:border-green-500 focus:ring-0"
+          className="flex-1 min-w-[300px] px-4 py-3 border-2 border-gray-200 rounded-lg text-base text-gray-900 transition-all duration-300 focus:outline-none focus:border-green-500 focus:ring-0"
           disabled={loading}
         />
         <button
