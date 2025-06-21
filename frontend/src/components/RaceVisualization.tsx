@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 
 interface CarState {
   driver_number: number
@@ -37,7 +37,7 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
     3: '#FF8700', 27: '#FF8700', // Alpine
   }
 
-  const drawRaceVisualization = () => {
+  const drawRaceVisualization = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -52,7 +52,7 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
 
     // Draw cars
     state.cars.forEach((car, index) => drawCar(ctx, car, index, canvas))
-  }
+  }, [state])
 
   const drawTrackBackground = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
     const { width, height } = canvas
@@ -125,7 +125,7 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
   // Update visualization when state changes
   useEffect(() => {
     drawRaceVisualization()
-  }, [state])
+  }, [state, drawRaceVisualization])
 
   // Sort cars by position for the position list
   const sortedCars = [...state.cars].sort((a, b) => (a.x || 0) - (b.x || 0))
