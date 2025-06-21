@@ -1,125 +1,247 @@
 import React, { useState, useEffect } from 'react'
 
-interface RaceControlsProps {
-  selectedSession: string
-  onSessionChange: (sessionKey: string) => void
-  speedFilter: number
-  onSpeedFilterChange: (speed: number) => void
-  currentLap: number
-  onLapChange: (lap: number) => void
-  totalLaps: number
+interface Race {
+  session_key: string;
+  session_name: string;
+  country: string;
+  date: string;
 }
 
-export default function RaceControls({ 
-  selectedSession, 
-  onSessionChange, 
-  speedFilter, 
+interface Year {
+  year: number;
+  name: string;
+}
+
+interface RaceControlsProps {
+  onRaceChange: (sessionKey: string, sessionName: string) => void;
+  onLapChange: (lap: number) => void;
+  onSpeedFilterChange: (filter: number) => void;
+  currentLap: number;
+  totalLaps: number;
+  speedFilter: number;
+  isLoading: boolean;
+}
+
+const RaceControls: React.FC<RaceControlsProps> = ({
+  onRaceChange,
+  onLapChange,
   onSpeedFilterChange,
   currentLap,
-  onLapChange,
-  totalLaps
-}: RaceControlsProps) {
-  const [sessions, setSessions] = useState<Array<{session_key: string, session_name: string}>>([]);
-  const [loading, setLoading] = useState(true);
+  totalLaps,
+  speedFilter,
+  isLoading
+}) => {
+  const [years, setYears] = useState<Year[]>([]);
+  const [races, setRaces] = useState<Race[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedRace, setSelectedRace] = useState<string>('');
+  const [loadingYears, setLoadingYears] = useState(false);
+  const [loadingRaces, setLoadingRaces] = useState(false);
 
+  // Determine API base URL
+  const getApiUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001/api'
+        : '/.netlify/functions/api';
+    }
+    return '/.netlify/functions/api';
+  };
+
+  // Load available years on component mount
   useEffect(() => {
-    const fetchSessions = async () => {
+    const loadYears = async () => {
+      setLoadingYears(true);
       try {
-        const response = await fetch('http://localhost:3001/api/sessions');
-        const data = await response.json();
-        setSessions(data);
+        const response = await fetch(`${getApiUrl()}/years`);
+        if (response.ok) {
+          const yearsData = await response.json();
+          setYears(yearsData);
+          // Default to 2024
+          if (yearsData.length > 0) {
+            setSelectedYear(2024);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching sessions:', error);
+        console.error('Error loading years:', error);
       } finally {
-        setLoading(false);
+        setLoadingYears(false);
       }
     };
 
-    fetchSessions();
+    loadYears();
   }, []);
 
-  const speedOptions = [
-    { value: 0, label: 'All Speeds' },
-    { value: 50, label: '≥50 km/h' },
-    { value: 100, label: '≥100 km/h' },
-    { value: 150, label: '≥150 km/h' },
-    { value: 200, label: '≥200 km/h' },
-    { value: 250, label: '≥250 km/h' },
-    { value: 300, label: '≥300 km/h' }
-  ];
+  // Load races when year changes
+  useEffect(() => {
+    if (selectedYear) {
+      const loadRaces = async () => {
+        setLoadingRaces(true);
+        try {
+          const response = await fetch(`${getApiUrl()}/sessions?year=${selectedYear}`);
+          if (response.ok) {
+            const racesData = await response.json();
+            setRaces(racesData);
+            setSelectedRace(''); // Reset race selection
+          }
+        } catch (error) {
+          console.error('Error loading races:', error);
+        } finally {
+          setLoadingRaces(false);
+        }
+      };
+
+      loadRaces();
+    }
+  }, [selectedYear]);
+
+  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const year = parseInt(event.target.value);
+    setSelectedYear(year);
+  };
+
+  const handleRaceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const sessionKey = event.target.value;
+    setSelectedRace(sessionKey);
+    
+    if (sessionKey) {
+      const race = races.find(r => r.session_key === sessionKey);
+      if (race) {
+        onRaceChange(sessionKey, race.session_name);
+      }
+    }
+  };
+
+  const handleLapChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const lap = parseInt(event.target.value);
+    onLapChange(lap);
+  };
+
+  const handleSpeedFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const filter = parseInt(event.target.value);
+    onSpeedFilterChange(filter);
+  };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Session Selector */}
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">🏎️ F1 Live Telemetry Controls</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Year Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-800 mb-2">
-            Race Session
+          <label htmlFor="year-select" className="block text-sm font-medium text-gray-800 mb-2">
+            📅 Season
           </label>
           <select
-            value={selectedSession}
-            onChange={(e) => onSessionChange(e.target.value)}
-            disabled={loading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+            id="year-select"
+            value={selectedYear || ''}
+            onChange={handleYearChange}
+            disabled={loadingYears}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
           >
             <option value="">
-              {loading ? 'Loading...' : 'Select a race'}
+              {loadingYears ? 'Loading...' : 'Select Season'}
             </option>
-            {sessions.map((session) => (
-              <option key={session.session_key} value={session.session_key}>
-                {session.session_name}
+            {years.map((year) => (
+              <option key={year.year} value={year.year} className="text-gray-900">
+                {year.name}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Lap Selector */}
+        {/* Race Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-800 mb-2">
-            Lap
+          <label htmlFor="race-select" className="block text-sm font-medium text-gray-800 mb-2">
+            🏁 Grand Prix
           </label>
           <select
-            value={currentLap}
-            onChange={(e) => onLapChange(parseInt(e.target.value))}
-            disabled={!selectedSession}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+            id="race-select"
+            value={selectedRace}
+            onChange={handleRaceChange}
+            disabled={!selectedYear || loadingRaces || isLoading}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
           >
-            {Array.from({ length: totalLaps }, (_, i) => i + 1).map((lap) => (
-              <option key={lap} value={lap}>
-                Lap {lap}
+            <option value="">
+              {loadingRaces ? 'Loading...' : !selectedYear ? 'Select Season First' : 'Select Grand Prix'}
+            </option>
+            {races.map((race) => (
+              <option key={race.session_key} value={race.session_key} className="text-gray-900">
+                {race.session_name}
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Lap Navigation */}
+        <div>
+          <label htmlFor="lap-slider" className="block text-sm font-medium text-gray-800 mb-2">
+            🏃 Lap: {currentLap} / {totalLaps}
+          </label>
+          <input
+            id="lap-slider"
+            type="range"
+            min="1"
+            max={totalLaps || 1}
+            value={currentLap}
+            onChange={handleLapChange}
+            disabled={!selectedRace || isLoading}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+          />
+          <div className="flex justify-between text-xs text-gray-600 mt-1">
+            <span>Lap 1</span>
+            <span>Lap {totalLaps}</span>
+          </div>
         </div>
 
         {/* Speed Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-800 mb-2">
-            Speed Filter
+          <label htmlFor="speed-filter" className="block text-sm font-medium text-gray-800 mb-2">
+            ⚡ Speed Filter
           </label>
           <select
+            id="speed-filter"
             value={speedFilter}
-            onChange={(e) => onSpeedFilterChange(parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+            onChange={handleSpeedFilterChange}
+            disabled={!selectedRace || isLoading}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
           >
-            {speedOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            <option value={0} className="text-gray-900">All Speeds</option>
+            <option value={50} className="text-gray-900">≥ 50 km/h</option>
+            <option value={100} className="text-gray-900">≥ 100 km/h</option>
+            <option value={150} className="text-gray-900">≥ 150 km/h</option>
+            <option value={200} className="text-gray-900">≥ 200 km/h</option>
+            <option value={250} className="text-gray-900">≥ 250 km/h</option>
+            <option value={300} className="text-gray-900">≥ 300 km/h</option>
           </select>
         </div>
+      </div>
 
-        {/* Lap Info */}
-        <div>
-          <label className="block text-sm font-medium text-gray-800 mb-2">
-            Race Progress
-          </label>
-          <div className="px-3 py-2 bg-gray-100 rounded-md text-gray-900">
-            {selectedSession ? `${currentLap} / ${totalLaps}` : 'No race selected'}
-          </div>
-        </div>
+      {/* Status Indicators */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {loadingYears && (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Loading seasons...
+          </span>
+        )}
+        {loadingRaces && (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Loading races...
+          </span>
+        )}
+        {isLoading && (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            Loading telemetry...
+          </span>
+        )}
+        {selectedRace && !isLoading && (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            ✅ Ready
+          </span>
+        )}
       </div>
     </div>
   );
-} 
+};
+
+export default RaceControls; 
