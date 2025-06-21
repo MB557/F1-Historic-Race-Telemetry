@@ -116,8 +116,12 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
 
     // Draw speed indicator
     if (car.speed > 0) {
-      const speedBarHeight = (car.speed / 350) * 40 // Normalize to max speed
-      ctx.fillStyle = '#00FF00'
+      const speedBarHeight = Math.max(4, (car.speed / 350) * 40) // Normalize to max speed, minimum 4px
+      // Color based on speed - red (slow) to green (fast)
+      const speedRatio = Math.min(car.speed / 300, 1) // Normalize to 0-1
+      const red = Math.floor(255 * (1 - speedRatio))
+      const green = Math.floor(255 * speedRatio)
+      ctx.fillStyle = `rgb(${red}, ${green}, 0)`
       ctx.fillRect(x + 20, y - speedBarHeight / 2, 4, speedBarHeight)
     }
   }
@@ -144,14 +148,14 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
             className="border border-gray-300 rounded-lg w-full max-w-full h-auto"
             style={{ maxHeight: '600px' }}
           />
-          <p className="text-sm text-gray-600 mt-2 text-center">
+          <p className="text-sm text-gray-800 mt-2 text-center">
             🏁 Track positions showing driver race standings
           </p>
         </div>
 
         {/* Position List */}
         <div className="lg:w-80">
-          <h4 className="font-semibold mb-3 text-gray-700">Current Positions</h4>
+          <h4 className="font-semibold mb-3 text-gray-900">Current Positions</h4>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {sortedCars.map((car, index) => (
               <div
@@ -166,8 +170,8 @@ export function RaceVisualization({ state }: RaceVisualizationProps) {
                   P{index + 1}
                 </span>
                 <span className="font-semibold">#{car.driver_number}</span>
-                <div className="ml-auto text-sm text-gray-600">
-                  {Math.round(car.speed)} km/h
+                <div className="ml-auto text-sm text-gray-800 font-medium">
+                  {Math.round(car.speed || 0)} km/h
                 </div>
               </div>
             ))}

@@ -1,302 +1,164 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { RaceLoader } from '@/components/RaceLoader'
-import { RaceInfo } from '@/components/RaceInfo'
-import { RaceControls } from '@/components/RaceControls'
-import { RaceVisualization } from '@/components/RaceVisualization'
-import { RaceDataDisplay } from '@/components/RaceDataDisplay'
+import { useState, useEffect, useCallback } from 'react'
+import RaceControls from '../components/RaceControls'
+import F1TelemetryTable from '../components/F1TelemetryTable'
 
-interface CarState {
+interface CarData {
   driver_number: number
-  x: number
-  y: number
+  timestamp: number
   speed: number
-  gear?: number
-  throttle?: number
-  brake?: boolean
-  timestamp: number
-}
-
-interface ReplayState {
-  timestamp: number
-  cars: CarState[]
-}
-
-interface TimelineEntry {
-  lap: number
-  driver_number: number
-  sector1_time?: number
-  sector2_time?: number
-  sector3_time?: number
+  gear: number
+  throttle: number
+  brake: number
+  rpm: number
+  drs: number
+  x?: number
+  y?: number
+  z?: number
+  position?: number
   lap_time?: number
-  pit_stop: boolean
+  gap_to_leader?: string
 }
 
-interface Timeline {
+interface LapData {
   session_key: string
+  lap: number
   total_laps: number
-  entries: TimelineEntry[]
+  cars: CarData[]
+  data_source?: string
 }
 
-interface LoadRaceResponse {
-  success: boolean
-  message: string
-  session_key?: string
-  endpoints?: {
-    state: string
-    timeline: string
-  }
-  example_usage?: {
-    state: string
-    timeline: string
-  }
-}
-
-export default function F1RaceReplayer() {
-  // State management
-  const [currentSession, setCurrentSession] = useState<{key: string, name: string} | null>(null)
-  const [currentTimeline, setCurrentTimeline] = useState<Timeline | null>(null)
-  const [currentState, setCurrentState] = useState<ReplayState | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1)
-  const [minTimestamp, setMinTimestamp] = useState(0)
-  const [maxTimestamp, setMaxTimestamp] = useState(0)
-  const [currentTimestamp, setCurrentTimestamp] = useState(0)
+export default function Home() {
+  const [selectedSession, setSelectedSession] = useState<string>('')
+  const [currentLap, setCurrentLap] = useState(1)
+  const [totalLaps, setTotalLaps] = useState(57)
+  const [lapData, setLapData] = useState<LapData | null>(null)
+  const [speedFilter, setSpeedFilter] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const playbackInterval = useRef<NodeJS.Timeout | null>(null)
-
-  // API endpoints
-  const API_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : ''
-
-  const loadRace = async (raceName: string) => {
-    if (!raceName.trim()) {
-      setError('Please enter a race name')
-      return
-    }
-
+  const fetchLapData = useCallback(async (sessionKey: string, lap: number) => {
+    if (!sessionKey) return
+    
     try {
       setLoading(true)
       setError(null)
-      hideAllSections()
-
-      const response = await fetch(`${API_BASE}/api/load-race?race_name=${encodeURIComponent(raceName)}`, {
-        method: 'POST'
-      })
-
-      const result: LoadRaceResponse = await response.json()
-
-      if (!result.success) {
-        throw new Error(result.message)
+      
+      const response = await fetch(`http://localhost:3001/api/replay/${sessionKey}/lap/${lap}`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-
-      // Store session info
-      setCurrentSession({
-        key: result.session_key!,
-        name: raceName
-      })
-
-      // Load timeline data
-      await loadTimeline(result.session_key!)
-
-    } catch (error) {
-      console.error('Error loading race:', error)
-      setError(`Failed to load race: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      
+      const data = await response.json()
+      setLapData(data)
+      setTotalLaps(data.total_laps)
+      
+    } catch (err) {
+      console.error('Error fetching lap data:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch lap data')
     } finally {
       setLoading(false)
     }
-  }
-
-  const loadTimeline = async (sessionKey: string) => {
-    try {
-      const response = await fetch(`${API_BASE}/api/replay/${sessionKey}/timeline`)
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const timeline: Timeline = await response.json()
-      setCurrentTimeline(timeline)
-
-      // Set timestamp range
-      await getTimestampRange(sessionKey)
-
-    } catch (error) {
-      console.error('Error loading timeline:', error)
-      throw error
-    }
-  }
-
-  const getTimestampRange = async (sessionKey: string) => {
-    try {
-      // Known timestamp ranges for demo sessions
-      let minTs, maxTs
-      
-      if (sessionKey === '7953') { // Bahrain 2023
-        minTs = 1678024866.787
-        maxTs = 1678034180.243
-      } else if (sessionKey === '9094') { // Monaco 2023
-        minTs = 1685275266.82
-        maxTs = 1685285565.231
-      } else if (sessionKey === '9173') { // Japan 2023
-        minTs = 1696220790
-        maxTs = 1696230790
-      } else {
-        // Generic range - try to get first valid state
-        minTs = Date.now() / 1000 - 7200
-        maxTs = Date.now() / 1000
-      }
-
-      setMinTimestamp(minTs)
-      setMaxTimestamp(maxTs)
-      setCurrentTimestamp(minTs)
-
-      // Verify we can get data at the start timestamp
-      const testResponse = await fetch(`${API_BASE}/api/replay/${sessionKey}/state?t=${minTs}`)
-      if (!testResponse.ok) {
-        console.warn('Could not fetch initial state, adjusting timestamp range')
-        setMinTimestamp(minTs + 60)
-        setCurrentTimestamp(minTs + 60)
-      }
-
-    } catch {
-      console.warn('Could not determine timestamp range, using defaults')
-    }
-  }
-
-  const updateRaceState = useCallback(async () => {
-    if (!currentSession) return
-
-    try {
-      const response = await fetch(`${API_BASE}/api/replay/${currentSession.key}/state?t=${currentTimestamp}`)
-      
-      if (!response.ok) {
-        console.warn(`Could not fetch state for timestamp ${currentTimestamp}`)
-        return
-      }
-
-      const state: ReplayState = await response.json()
-      setCurrentState(state)
-
-    } catch (error) {
-      console.error('Error updating race state:', error)
-    }
-  }, [currentSession, currentTimestamp, API_BASE])
-
-  const startPlayback = () => {
-    if (isPlaying) return
-    
-    setIsPlaying(true)
-    playbackInterval.current = setInterval(() => {
-      setCurrentTimestamp(prev => {
-        const next = prev + playbackSpeed
-        if (next >= maxTimestamp) {
-          setIsPlaying(false)
-          if (playbackInterval.current) {
-            clearInterval(playbackInterval.current)
-          }
-          return maxTimestamp
-        }
-        return next
-      })
-    }, 1000)
-  }
-
-  const pausePlayback = () => {
-    setIsPlaying(false)
-    if (playbackInterval.current) {
-      clearInterval(playbackInterval.current)
-      playbackInterval.current = null
-    }
-  }
-
-  const resetPlayback = () => {
-    pausePlayback()
-    setCurrentTimestamp(minTimestamp)
-  }
-
-  const hideAllSections = () => {
-    setCurrentSession(null)
-    setCurrentTimeline(null)
-    setCurrentState(null)
-  }
-
-  // Update race state when timestamp changes
-  useEffect(() => {
-    if (currentSession && currentTimestamp >= minTimestamp && currentTimestamp <= maxTimestamp) {
-      updateRaceState()
-    }
-  }, [currentTimestamp, currentSession, minTimestamp, maxTimestamp, updateRaceState])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (playbackInterval.current) {
-        clearInterval(playbackInterval.current)
-      }
-    }
   }, [])
 
+  // Fetch lap data when session or lap changes
+  useEffect(() => {
+    if (selectedSession) {
+      fetchLapData(selectedSession, currentLap)
+    }
+  }, [selectedSession, currentLap, fetchLapData])
+
+  const handleSessionChange = async (sessionKey: string) => {
+    setSelectedSession(sessionKey)
+    setCurrentLap(1) // Reset to lap 1 when changing sessions
+    setLapData(null)
+  }
+
+  const handleLapChange = (lap: number) => {
+    setCurrentLap(lap)
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <header className="text-center text-white mb-8">
-          <h1 className="text-4xl font-bold mb-2">🏎️ F1 Historic Race Replayer</h1>
-          <p className="text-lg opacity-90">Load and replay Formula 1 races with real telemetry data</p>
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-7xl mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            🏎️ F1 Live Telemetry
+          </h1>
+          <p className="text-gray-700">
+            Lap-by-lap Formula 1 race data and telemetry analysis
+          </p>
         </header>
 
-        {/* Race Loader */}
-        <RaceLoader
-          onLoadRace={loadRace}
-          loading={loading}
-          error={error}
+        <RaceControls
+          selectedSession={selectedSession}
+          onSessionChange={handleSessionChange}
+          speedFilter={speedFilter}
+          onSpeedFilterChange={setSpeedFilter}
+          currentLap={currentLap}
+          onLapChange={handleLapChange}
+          totalLaps={totalLaps}
         />
 
-        {/* Race Info */}
-        {currentSession && currentTimeline && (
-          <RaceInfo
-            session={currentSession}
-            timeline={currentTimeline}
-          />
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <p className="mt-2 text-gray-700">Loading lap data...</p>
+          </div>
         )}
 
-        {/* Race Controls */}
-        {currentSession && (
-          <RaceControls
-            isPlaying={isPlaying}
-            playbackSpeed={playbackSpeed}
-            currentTimestamp={currentTimestamp}
-            minTimestamp={minTimestamp}
-            maxTimestamp={maxTimestamp}
-            onPlay={startPlayback}
-            onPause={pausePlayback}
-            onReset={resetPlayback}
-            onSpeedChange={setPlaybackSpeed}
-            onTimestampChange={setCurrentTimestamp}
-          />
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <p>Error: {error}</p>
+          </div>
         )}
 
-        {/* Race Visualization */}
-        {currentState && (
-          <RaceVisualization
-            state={currentState}
-          />
+        {/* Telemetry Table */}
+        {lapData && !loading && (
+          <div className="mt-8">
+            <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Lap {lapData.lap} of {lapData.total_laps}
+                </h2>
+                {lapData.data_source && (
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    lapData.data_source.includes('Real Data') 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {lapData.data_source.includes('Real Data') ? '✅ Real F1 Data' : '⚠️ Simulated Data'}
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-700">
+                Showing telemetry data for {lapData.cars.length} drivers
+                {lapData.data_source && lapData.data_source.includes('Real Data') && (
+                  <span className="text-green-600 font-medium"> • Authentic OpenF1 API</span>
+                )}
+              </p>
+            </div>
+            
+            <F1TelemetryTable 
+              carData={lapData.cars}
+              currentTimestamp={0} // Not used in lap-based mode
+              speedFilter={speedFilter}
+            />
+          </div>
         )}
 
-        {/* Race Data Display */}
-        {currentState && (
-          <RaceDataDisplay
-            state={currentState}
-          />
+        {/* No Data State */}
+        {!selectedSession && !loading && (
+          <div className="text-center py-12">
+            <p className="text-gray-700 text-lg">
+              Select a race session to view telemetry data
+            </p>
+          </div>
         )}
-
-        {/* Footer */}
-        <footer className="text-center text-white mt-12 opacity-75">
-          <p>Data provided by <a href="https://openf1.org/" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-100">OpenF1 API</a></p>
-          <p>This is an unofficial project - not affiliated with Formula 1</p>
-        </footer>
       </div>
     </div>
   )
