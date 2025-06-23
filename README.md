@@ -2,15 +2,6 @@
 
 A modern web application that allows users to watch and interact with historical Formula 1 races in real-time. Load any F1 race by name, then play, pause, and scrub through the race timeline to see how driver positions and race dynamics evolved throughout the event.
 
-## ✨ Features
-
-- **🎮 Interactive Race Playback**: Play, pause, and scrub through historical F1 races
-- **📊 Real-time Telemetry**: View driver positions, speeds, gear, throttle, and brake data
-- **🎯 Visual Race Track**: Canvas-based visualization showing driver positions and standings
-- **⚡ Fast Data Access**: Fetches authentic race data from the OpenF1 API
-- **🎨 Modern UI**: Built with Next.js and Tailwind CSS for a beautiful, responsive interface
-- **☁️ Cloud Deployment**: Optimized for Netlify deployment with serverless functions
-
 ## 🚀 Technology Stack
 
 ### Frontend
@@ -89,35 +80,6 @@ A modern web application that allows users to watch and interact with historical
 - **Position List**: Real-time standings with driver numbers and speeds
 - **Telemetry Data**: Detailed view of each driver's speed, gear, throttle, and brake status
 
-## 🚀 Deployment
-
-### Netlify Deployment
-
-1. **Build the project**
-   ```bash
-   cd frontend && npm run build
-   ```
-
-2. **Deploy to Netlify**
-   - Connect your repository to Netlify
-   - Build command: `cd frontend && npm run build`
-   - Publish directory: `frontend/out`
-   - The `netlify.toml` file is already configured
-
-3. **Environment Setup**
-   - No environment variables needed for basic functionality
-   - The OpenF1 API is public and doesn't require authentication
-
-### Manual Deployment
-
-1. **Build for production**
-   ```bash
-   cd frontend
-   npm run build
-   ```
-
-2. **Deploy the `frontend/out` directory** to any static hosting provider
-
 ## 🎮 Available Scripts
 
 ```bash
@@ -151,11 +113,6 @@ The app works with any F1 race from recent years. Some examples:
 - `GET /api/replay/{session_key}/state?t=<timestamp>` - Get race state at timestamp
 - `GET /api/replay/{session_key}/timeline` - Get race timeline
 
-### Netlify Functions (Production)
-- `POST /.netlify/functions/api/load-race?race_name=<name>`
-- `GET /.netlify/functions/api/replay/{session_key}/state?t=<timestamp>`
-- `GET /.netlify/functions/api/replay/{session_key}/timeline`
-
 ## 🐛 Troubleshooting
 
 ### Common Issues
@@ -164,16 +121,6 @@ The app works with any F1 race from recent years. Some examples:
    - Check the race name format: "Country GP Year"
    - Ensure the race exists in the OpenF1 database
    - Check browser console for API errors
-
-2. **Blank visualization**
-   - Wait for race data to fully load
-   - Try refreshing the page
-   - Check if browser supports Canvas API
-
-3. **Slow performance**
-   - Large race datasets may take time to load
-   - Try reducing playback speed
-   - Check network connection
 
 ### Development Issues
 
@@ -187,5 +134,3 @@ The app works with any F1 race from recent years. Some examples:
    - Clear node_modules and reinstall if issues persist
 
 ---
-
-**Note**: This is an unofficial project and is not affiliated with Formula 1, FIA, or any F1 teams. 
